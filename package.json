@@ -1,0 +1,20 @@
+{
+  "name": "jsos-init",
+  "version": "0.0.1",
+  "description": "JSOS init mechanism and process spawner",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "jsos"
+  ],
+  "author": "Lauri Svan",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^1.2.4",
+    "deep-extend": "^0.2.10",
+    "npmlog": "0.0.6",
+    "rc": "^0.4.0"
+  }
+}

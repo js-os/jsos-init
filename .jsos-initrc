@@ -1,0 +1,10 @@
+{
+  "log": {
+    "prefix": "init"
+  },
+
+  "npm": {
+    "prefix": "${HOME}/.jsos/node_modules",
+    "cache": "${HOME}/.jsos/cache"
+  }
+}
