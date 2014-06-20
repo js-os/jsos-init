@@ -12,29 +12,62 @@ var Promise = require('bluebird'),
 // Then construct a loader with the given configuration
 var config = rc('jsos-init', {
       logging: {
-        prefix: ''
+        prefix: 'init'
       },
-      npm: {}
+      npm: {
+        // Disable spinner, so that it does not screw up our CLI
+        spin: false
+      }
     }),
     prefix = config.logging.prefix,
     loader = Loader(config);
+
+// Helper functions
+function startPackages(loader) {
+  return function(packages) {
+    var promises = packages.map(loader.start)
+    return Promise.all(promises);
+  }
+}
+
+function startREPL(context) {
+  return repl.start({
+      prompt: 'jsos> ',
+      input: process.stdin,
+      output: process.stdout
+    })
+
+  // Callback that is invoked when REPL dies
+  return new Promise(function(resolve, reject) {
+    var cli = repl.start({
+      prompt: 'jsos> ',
+      input: process.stdin,
+      output: process.stdout
+    })
+
+    // Pass the loader to the context
+    for (prop in context) {
+      if (context.hasOwnProperty(prop)) {
+        cli.context[prop] = context[prop];
+      }
+    }
+
+    // Handle the exist function
+    cli.on('exit', function() {
+      return resolve();      
+    })
+  });
+}
 
 // Initialize the loader
 var promise = 
   // Initialize the packet manager
   loader.init(config)
   // Then start all the packages found
-  .then(function() {
-    return loader.startAll();
-  })
+  .then(loader.list)
   // And finally start a REPL, handing the loader as a parameter
-  .then(function() {
-    repl.start({
-      prompt: 'jsos>',
-      input: process.stdin,
-      output: process.stdout
-    })
-  })
+  .then(startPackages(loader))
+  .then(startREPL({ config: config, loader: loader }))
   .catch(function(err) {
   	log.error(prefix, 'Initialization failed: %s', err.message);
   });
