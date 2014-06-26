@@ -1,7 +1,7 @@
 // Require a the few dependencies we will need: A promise wrapper, package
 // manager, log implementation and REPL loop for console
 var Promise = require('bluebird'),
-	Loader = require('./lib/loader'),
+	Launcher = require('./lib/launcher'),
   path = require('path'),
 	log = require('npmlog'),
 	repl = require('repl'),
@@ -35,13 +35,13 @@ function loadConfig(fileName) {
 
 function createLauncher(config) {
 	return new Promise(function(resolve, reject) {
-		resolve(Loader(config));
+		resolve(new Launcher(config));
 	});
 }
 
 function startPackages(launcher) {
   return function(packages) {
-    var promises = packages.map(launcher.start)
+    var promises = packages.map(launcher.start.bind(launcher))
     return Promise.all(promises);
   }
 }
@@ -74,10 +74,11 @@ var promise = loadConfig('jsos-init')
 	.then(createLauncher)
 	.then(function(launcher) {
 	  // Then start all the packages found, and finally start the REPL
+		// Note: All the launcher specifics need to be executed in Launcher context.
 	  return launcher.init()
 			.then(launcher.list)
 		  .then(startPackages(launcher))
-		  .then(startREPL({ launcher: launcher }))
+		  .done(startREPL({ launcher: launcher }))
 	})
 	.catch(function(err) {
 		var message = nodeUtil.format('Initialization failed: %s', err.message);
