@@ -34,8 +34,15 @@ function loadConfig(fileName) {
 }
 
 function createLauncher(config) {
+	// Curry the logger with the particular prefix
+	var logger = {
+		info: log.info.bind(log, config.logging.prefix),
+		error: log.error.bind(log, config.logging.prefix),
+		warn: log.warn.bind(log, config.logging.prefix)
+	};
+
 	return new Promise(function(resolve, reject) {
-		resolve(new Launcher(config));
+		resolve(new Launcher(config, logger));
 	});
 }
 
@@ -75,7 +82,7 @@ var promise = loadConfig('jsos-init')
 	.then(function(launcher) {
 	  // Then start all the packages found, and finally start the REPL
 		// Note: All the launcher specifics need to be executed in Launcher context.
-	  return launcher.init()
+	  return launcher.init().bind(launcher)
 			.then(launcher.list)
 		  .then(startPackages(launcher))
 		  .done(startREPL({ launcher: launcher }))
@@ -83,4 +90,5 @@ var promise = loadConfig('jsos-init')
 	.catch(function(err) {
 		var message = nodeUtil.format('Initialization failed: %s', err.message);
   	log.error(message);
+		console.log(err.stack);
   });
